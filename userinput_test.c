@@ -25,11 +25,9 @@ int main(int argc, char * argv[])
 	printf("you entered:\n%s\n", buf);
 	char copy[32];
 	char *ptr = copy;
-	//Strip the ints
+	//Strip the ints of spaces and non valid chars
 	for(int i=0; i<strlen(buf); i++){
-		printf("validation is %u\n", char_validation(buf[i]));
 		if (char_validation(buf[i])){
-			printf("adding char %c\n", buf[i]);
 			*ptr = buf[i];
 			++ptr;
 		}
@@ -43,33 +41,47 @@ int main(int argc, char * argv[])
 	struct Part *work = unread_head;
 	while(*ptr!='\0'){
 		printf("Scanning ptr component %c\n", *ptr);
-		
 		switch (char_validation(*ptr)){
 			case 1:
-				ptr++;
+				//make a substring that contains the entire character and close the program if the number is invalid.
+				char *begin_int = ptr;
+				int periodSeen = 0;
+				int length = 0;
+				while(char_validation(*ptr)==1){
+					printf("char of *ptr = %c\n", *ptr);
+					length++;
+					if(*ptr=='.') {
+						periodSeen++;
+						if(periodSeen>1) {
+							printf("Syntax error");
+							return 0;
+						}
+					}
+					ptr++;
+				}
+				char *int_convert = malloc(length+1);
+				memcpy(int_convert, begin_int, length);
+				int_convert[length] = '\0';
+				printf("Parsed ascii num = %d\n", atol(int_convert));
+				free(int_convert);
 				break;
 			case 2:
 				struct Part *next = malloc(sizeof(struct Part));
 				next->value = 0;
 				next->next = NULL;
-				printf("Case 2 operating on object %u\n", next);
 				printf("work pointer %u\n", work);				
 				printf("next pointer %u\n", next);
 				work->next = next;
 				next->operator = *ptr;
-				
 				ptr++;
 				break;
 			default: //error
 				return 0;
 		}
 	}
-	printf("unread head ptr %u\n", unread_head);
-	printf("unread head next ptr %u\n", unread_head->next);
-	printf("unread head next ptr deref %u\n", *unread_head->next);
 	work = unread_head->next;
 	printf("work node ptr is %u\n", work);
-	while(&work!=NULL){
+	while(work!=NULL){
 		printf("work contains op %u\n", work->operator);
 		if(work->next == NULL) break;
 		work=work->next;
