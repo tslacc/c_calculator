@@ -1,13 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "expr_part.h"
+
 #define BUFFER_SZ 64
-//A stack component. Either operator is 0 and this is a number, or operator is nonzero and is an operator (+-*/^)
-struct Part{
-	char operator;
-	long value;
-	struct Part *next;	
-};
 int char_validation(char c){
 
 	if('0'<c && c<'9') return 1;
@@ -62,7 +58,7 @@ int main(int argc, char * argv[])
 				char *int_convert = malloc(length+1);
 				memcpy(int_convert, begin_int, length);
 				int_convert[length] = '\0';
-				printf("Parsed ascii num = %d\n", atol(int_convert));
+				printf("Parsed ascii num = %f\n", atof(int_convert));
 				free(int_convert);
 				break;
 			case 2:
@@ -86,7 +82,7 @@ int main(int argc, char * argv[])
 		if(work->next == NULL) break;
 		work=work->next;
 	}
-	printf("End program - has not yet cleared malloced Parts\n");
+	EXPR_P.cleanup(unread_head);
 	return 0;
 }
 //TODO Destroy all spaces AND non-numeric, non-operand keys.
