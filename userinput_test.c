@@ -29,14 +29,11 @@ int main(int argc, char * argv[])
 		}
 	}
 	*ptr = '\0';
-	printf("Stripped string %s\nhas length %u\n", copy, strlen(copy));
 	//Parse all and add to read.
 	ptr = copy;
 	struct Part *unread_head = malloc(sizeof(struct Part));
-	printf("unread head ptr %u\n", unread_head);
 	struct Part *work = unread_head;
 	while(*ptr!='\0'){
-		printf("Scanning ptr component %c\n", *ptr);
 		switch (char_validation(*ptr)){
 			case 1:
 				//make a substring that contains the entire character and close the program if the number is invalid.
@@ -44,7 +41,6 @@ int main(int argc, char * argv[])
 				int periodSeen = 0;
 				int length = 0;
 				while(char_validation(*ptr)==1){
-					printf("char of *ptr = %c\n", *ptr);
 					length++;
 					if(*ptr=='.') {
 						periodSeen++;
@@ -58,17 +54,24 @@ int main(int argc, char * argv[])
 				char *int_convert = malloc(length+1);
 				memcpy(int_convert, begin_int, length);
 				int_convert[length] = '\0';
-				printf("Parsed ascii num = %f\n", atof(int_convert));
+				work->next = malloc(sizeof(struct Part));
+				//printf("work next is new ptr %u\n",work->next);
+				work->next->operator = 0;
+				//printf("Source string %s\n",int_convert);
+				work->next->value = atof(int_convert);
+				work->next->next = NULL;
+				//printf("Assigning value address is %u, assigning value %f with result %f\n", &(work->next->value), atof(int_convert), work->next->value);
+				work = work->next;
 				free(int_convert);
 				break;
 			case 2:
-				struct Part *next = malloc(sizeof(struct Part));
-				next->value = 0;
-				next->next = NULL;
-				printf("work pointer %u\n", work);				
-				printf("next pointer %u\n", next);
-				work->next = next;
-				next->operator = *ptr;
+				work->next = malloc(sizeof(struct Part));
+				//printf("work next is new ptr %u\n",work->next);
+				work->next->operator = *ptr;
+				work->next->value = 0;
+				work->next->next = NULL;
+				//printf("op in work next set to %c\n", work->next->operator);
+				work = work->next;
 				ptr++;
 				break;
 			default: //error
@@ -76,12 +79,17 @@ int main(int argc, char * argv[])
 		}
 	}
 	work = unread_head->next;
-	printf("work node ptr is %u\n", work);
+
 	while(work!=NULL){
-		printf("work contains op %u\n", work->operator);
+		//printf("\nwork node ptr is %u\n", work);
+		//printf("op %c, val %f\n", work->operator, work->value);
+		//printf("Address reading from is %u, %u\n", &(work->operator), &(work->value));
+		if(work->operator==0) printf("%f", work->value);
+		else printf("%c", work->operator);
 		if(work->next == NULL) break;
 		work=work->next;
 	}
+	printf("\n");
 	EXPR_P.cleanup(unread_head);
 	return 0;
 }

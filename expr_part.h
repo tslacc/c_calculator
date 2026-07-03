@@ -2,7 +2,7 @@
 #define EXPR_PART_
 struct Part{
 	char operator;
-	long value;
+	float value;
 	struct Part *next;	
 };
 static void cleanup(struct Part *p){
