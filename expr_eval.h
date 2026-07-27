@@ -9,7 +9,6 @@ struct Part{
 	float value;
 	struct Part *next;	
 };
-int char_validation(char c);
 void cleanup(struct Part *p);
-float eval(char *input);
+float eval_expr(char *input);
 #endif

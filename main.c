@@ -13,6 +13,6 @@ int main(int argc, char * argv[])
 //	scanf("%[^\n]", userInput);
 	fgets(buf, sizeof(buf), stdin);
 	printf("you entered:\n%s\n", buf);
-	printf("Eval returns %f\n", eval(buf));
+	printf("Eval returns %f\n", eval_expr(buf));
 	return 0;
 }

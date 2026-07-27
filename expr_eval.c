@@ -1,6 +1,6 @@
 #include "expr_eval.h"
 
-int char_validation(char c){
+static int char_validation(char c){
 
 	if('0'<c && c<'9') return 1;
 	if(c == '.') return 1;
@@ -17,10 +17,9 @@ void cleanup(struct Part *p){
 	return;
 }
 
-float eval(char *input){
-	char copy[32];
+//Strip the buffer of spaces and non valid chars
+static void strip_spaces(char *input){
 	char *ptr = input;
-	//Strip the ints of spaces and non valid chars
 	for(int i=0; i<strlen(input); i++){
 		if (char_validation(input[i])){
 			*ptr = input[i];
@@ -28,8 +27,13 @@ float eval(char *input){
 		}
 	}
 	*ptr = '\0';
+	return;
+}
+
+float eval_expr(char *input){
+	strip_spaces(input);
+	char *ptr = input;
 	//Parse all and add to read.
-	ptr = copy;
 	struct Part *unread_head = malloc(sizeof(struct Part));
 	struct Part *work = unread_head;
 	while(*ptr!='\0'){
