@@ -1,5 +1,11 @@
 #include "expr_eval.h"
 
+struct Part{
+	char operator;
+	float value;
+	struct Part *next;	
+};
+
 static int char_validation(char c){
 
 	if('0'<c && c<'9') return 1;
@@ -9,7 +15,7 @@ static int char_validation(char c){
 	return 0;
 }
 
-void cleanup(struct Part *p){
+static void cleanup(struct Part *p){
 	if(p->next!=NULL){
 		cleanup(p->next);
 	}
@@ -30,29 +36,26 @@ static void strip_spaces(char *input){
 	return;
 }
 
-float eval_expr(char *input){
-	strip_spaces(input);
-	char *ptr = input;
-	//Parse all and add to read.
+static struct Part *buffer_to_parts(char *input){
 	struct Part *unread_head = malloc(sizeof(struct Part));
 	struct Part *work = unread_head;
-	while(*ptr!='\0'){
-		switch (char_validation(*ptr)){
+	while(*input!='\0'){
+		switch (char_validation(*input)){
 			case 1:
 				//make a substring that contains the entire character and close the program if the number is invalid.
-				char *begin_int = ptr;
+				char *begin_int = input;
 				int periodSeen = 0;
 				int length = 0;
-				while(char_validation(*ptr)==1){
+				while(char_validation(*input)==1){
 					length++;
-					if(*ptr=='.') {
+					if(*input=='.') {
 						periodSeen++;
 						if(periodSeen>1) {
 							printf("Syntax error");
 							return 0;
 						}
 					}
-					ptr++;
+					input++;
 				}
 				char *int_convert = malloc(length+1);
 				memcpy(int_convert, begin_int, length);
@@ -70,19 +73,28 @@ float eval_expr(char *input){
 			case 2:
 				work->next = malloc(sizeof(struct Part));
 				//printf("work next is new ptr %u\n",work->next);
-				work->next->operator = *ptr;
+				work->next->operator = *input;
 				work->next->value = 0;
 				work->next->next = NULL;
 				//printf("op in work next set to %c\n", work->next->operator);
 				work = work->next;
-				ptr++;
+				input++;
 				break;
 			default: //error
-				return 0;
+				cleanup(unread_head);
+				return NULL;
 		}
 	}
-	work = unread_head->next;
+	return unread_head->next;
+}
 
+float eval_expr(char *input){
+	strip_spaces(input);
+	char *ptr = input;
+	//Parse all and add to read.
+	
+	struct Part *work = buffer_to_parts(ptr);
+	
 	while(work!=NULL){
 		//printf("\nwork node ptr is %u\n", work);
 		//printf("op %c, val %f\n", work->operator, work->value);
@@ -93,6 +105,6 @@ float eval_expr(char *input){
 		work=work->next;
 	}
 	printf("\n");
-	cleanup(unread_head);
+	cleanup(work);
 	return 0;
 }
