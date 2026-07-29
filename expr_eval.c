@@ -6,8 +6,13 @@ struct Part{
 	struct Part *next;	
 };
 
+static int operator_precedence(char c){
+	if(c=='^') return 4;
+	if(c=='x'||c=='/') return 3;
+	if(c=='+'||c=='-') return 2;
+	return 0;
+}
 static int char_validation(char c){
-
 	if('0'<c && c<'9') return 1;
 	if(c == '.') return 1;
 	if(c == '+' || c == '-' || c == '*' || c == '/') return 2;
@@ -88,23 +93,49 @@ static struct Part *buffer_to_parts(char *input){
 	return unread_head->next;
 }
 
+//Shunting yard algorithm
+//https://en.wikipedia.org/wiki/Shunting_yard_algorithm#The_algorithm_in_detail
 float eval_expr(char *input){
 	strip_spaces(input);
-	char *ptr = input;
-	//Parse all and add to read.
-	
-	struct Part *work = buffer_to_parts(ptr);
+	struct Part *base = buffer_to_parts(input);
+	struct Part *work = base;
+	int max_sz = 0;
+	while(work!=NULL){
+		max_sz++;
+		work = work->next;
+	}
+	work = base;
+	struct Part **output_queue = malloc(sizeof(struct Part *)*max_sz);
+	int output_queue_position = 0;
+	int output_queue_size = 0;
+	struct Part **operator_stack = malloc(sizeof(struct Part *)*max_sz);
+	int operator_stack_size = 0;
 	
 	while(work!=NULL){
-		//printf("\nwork node ptr is %u\n", work);
-		//printf("op %c, val %f\n", work->operator, work->value);
-		//printf("Address reading from is %u, %u\n", &(work->operator), &(work->value));
-		if(work->operator==0) printf("%f", work->value);
-		else printf("%c", work->operator);
+		if(work->operator==0){
+			printf("Number %f to output queue\n", work->value);
+			output_queue[output_queue_size] = work;
+			output_queue_size++;
+		}
+		else{ //TODO Currently this also captures parens. Modify 115,120 to capture specific operators
+			printf("Operator %c, perform operation\n", work->operator);
+			//while (
+				//there is an operator o2 at the top of the operator stack which is not a left parenthesis
+				//and (o2 has greater precedence than o1 
+				//or (o1 and o2 have the same precedence and o1 is left-associative)) TODO IMPLEMENT
+			while(operator_stack_size>0 && operator_stack[operator_stack_size-1]->operator != '(' 
+					&& operator_precedence(operator_stack[operator_stack_size-1]->operator) > operator_precedence(work->operator)) {
+					//pop o2 from the operator stack into the output queue
+					//push o1 onto the operator stack
+					break;
+			}
+		}
 		if(work->next == NULL) break;
 		work=work->next;
 	}
 	printf("\n");
 	cleanup(work);
+	free(output_queue);
+	free(operator_stack);
 	return 0;
 }
