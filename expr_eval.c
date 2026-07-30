@@ -15,7 +15,7 @@ static int operator_precedence(char c){
 static int char_validation(char c){
 	if('0'<c && c<'9') return 1;
 	if(c == '.') return 1;
-	if(c == '+' || c == '-' || c == '*' || c == '/') return 2;
+	if(c == '+' || c == '-' || c == '*' || c == '/' || c=='^') return 2;
 	if(c == '(' || c == ')') return 2;
 	return 0;
 }
@@ -116,18 +116,37 @@ float eval_expr(char *input){
 			printf("Number %f to output queue\n", work->value);
 			output_queue[output_queue_size] = work;
 			output_queue_size++;
-		}
-		else{ //TODO Currently this also captures parens. Modify 115,120 to capture specific operators
+		} else if(work->operator=='('){ //push onto operator stack
+			operator_stack[operator_stack_size]=work;
+			operator_stack_size++;
+		} else if(work->operator==')'){ //Move everything from operator stack to output queue until you find a left paren
+			while(operator_stack_size != 0 && operator_stack[operator_stack_size]->operator != '('){
+				output_queue[output_queue_size] = operator_stack[operator_stack_size];
+				output_queue_size++;
+				operator_stack_size--;
+			}
+			if(operator_stack_size != 0 && operator_stack[operator_stack_size]->operator == '('){
+				operator_stack_size--;
+			} else {
+				//TODO Handle critical input error mismatched parens
+				break;
+			}
+		} else {//This is some kind of operator called o1
 			printf("Operator %c, perform operation\n", work->operator);
 			//while (
 				//there is an operator o2 at the top of the operator stack which is not a left parenthesis
 				//and (o2 has greater precedence than o1 
-				//or (o1 and o2 have the same precedence and o1 is left-associative)) TODO IMPLEMENT
+				//or (o1 and o2 have the same precedence and o1 is left-associative))
 			while(operator_stack_size>0 && operator_stack[operator_stack_size-1]->operator != '(' 
 					&& operator_precedence(operator_stack[operator_stack_size-1]->operator) > operator_precedence(work->operator)) {
-					//pop o2 from the operator stack into the output queue
+					// pop o2 from the operator stack into the output queue
+					// push o1 onto the operator stack
+					output_queue[output_queue_size] = operator_stack[operator_stack_size];
+					output_queue_size++;
+					operator_stack_size--;
 					//push o1 onto the operator stack
-					break;
+					operator_stack[operator_stack_size] = work;
+					operator_stack_size++;
 			}
 		}
 		if(work->next == NULL) break;
