@@ -105,28 +105,38 @@ float eval_expr(char *input){
 		work = work->next;
 	}
 	work = base;
-	struct Part **output_queue = malloc(sizeof(struct Part *)*max_sz);
-	int output_queue_position = 0;
-	int output_queue_size = 0;
-	struct Part **operator_stack = malloc(sizeof(struct Part *)*max_sz);
-	int operator_stack_size = 0;
+	
+	struct Part *op_stack = NULL;
+	struct Part *out_queue_front = NULL;
+	struct Part *out_queue_back = NULL;
 	
 	while(work!=NULL){
 		if(work->operator==0){
 			printf("Number %f to output queue\n", work->value);
-			output_queue[output_queue_size] = work;
-			output_queue_size++;
-		} else if(work->operator=='('){ //push onto operator stack
-			operator_stack[operator_stack_size]=work;
-			operator_stack_size++;
-		} else if(work->operator==')'){ //Move everything from operator stack to output queue until you find a left paren
-			while(operator_stack_size != 0 && operator_stack[operator_stack_size]->operator != '('){
-				output_queue[output_queue_size] = operator_stack[operator_stack_size];
-				output_queue_size++;
-				operator_stack_size--;
+			if(out_queue_front==NULL){
+				out_queue_front = work;
+				out_queue_back = work;
+			} else {
+				out_queue_back->next = work;
 			}
-			if(operator_stack_size != 0 && operator_stack[operator_stack_size]->operator == '('){
-				operator_stack_size--;
+			work = work->next;
+		} else if(work->operator=='('){ //push onto operator stack
+			struct Part *tmp = work;
+			work = work->next;
+			tmp->next = op_stack;
+			op_stack = tmp;
+		} else if(work->operator==')'){ //Move everything from operator stack to output queue until you find a left paren
+			while(op_stack != NULL && op_stack->operator!='('){
+				if(out_queue_front==NULL){
+					out_queue_front = op_stack;
+					out_queue_back = op_stack;
+				} else {
+					out_queue_back->next = op_stack;
+				}
+				op_stack = op_stack->next;
+			}
+			if(op_stack!=NULL && op_stack->operator == '('){
+				op_stack = op_stack->next;
 			} else {
 				//TODO Handle critical input error mismatched parens
 				break;
@@ -137,24 +147,27 @@ float eval_expr(char *input){
 				//there is an operator o2 at the top of the operator stack which is not a left parenthesis
 				//and (o2 has greater precedence than o1 
 				//or (o1 and o2 have the same precedence and o1 is left-associative))
-			while(operator_stack_size>0 && operator_stack[operator_stack_size-1]->operator != '(' 
-					&& operator_precedence(operator_stack[operator_stack_size-1]->operator) > operator_precedence(work->operator)) {
+			while(op_stack!=NULL && op_stack->operator != '(' 
+					&& operator_precedence(op_stack->operator) > operator_precedence(work->operator)) {
 					// pop o2 from the operator stack into the output queue
-					// push o1 onto the operator stack
-					output_queue[output_queue_size] = operator_stack[operator_stack_size];
-					output_queue_size++;
-					operator_stack_size--;
+					if(out_queue_front==NULL){
+						out_queue_front = op_stack;
+						out_queue_back = op_stack;
+					} else {
+						out_queue_back->next = op_stack;
+					}
+					op_stack = op_stack->next;
 					//push o1 onto the operator stack
-					operator_stack[operator_stack_size] = work;
-					operator_stack_size++;
+					struct Part *tmp = work;
+					work = work->next;
+					tmp->next = op_stack;
+					op_stack = tmp;
 			}
+			
 		}
-		if(work->next == NULL) break;
-		work=work->next;
 	}
 	printf("\n");
-	cleanup(work);
-	free(output_queue);
-	free(operator_stack);
+	//Cleanup all tokens in the final list
+	cleanup(out_queue_front);
 	return 0;
 }
