@@ -18,7 +18,7 @@ static int operator_precedence(char c){
 	return 0;
 }
 static int char_validation(char c){
-	if('0'<c && c<'9') return 1;
+	if('0'<=c && c<='9') return 1;
 	if(c == '.') return 1;
 	if(c == '+' || c == '-' || c == '*' || c == '/' || c=='^') return 2;
 	if(c == '(' || c == ')') return 2;
@@ -41,50 +41,63 @@ static void strip_spaces(char *input){
 static struct Part *buffer_to_parts(char *input){
 	struct Part *unread_head = malloc(sizeof(struct Part));
 	struct Part *work = unread_head;
+	int negative_ok = 1;
+	printf("Rcvd input %s\n", input);
 	while(*input!='\0'){
-		switch (char_validation(*input)){
-			case 1:
-				//make a substring that contains the entire character and close the program if the number is invalid.
-				char *begin_int = input;
-				int periodSeen = 0;
-				int length = 0;
-				while(char_validation(*input)==1){
-					length++;
-					if(*input=='.') {
-						periodSeen++;
-						if(periodSeen>1) {
-							//printf("Syntax error");
-							return 0;
-						}
-					}
-					input++;
-				}
-				char *int_convert = malloc(length+1);
-				memcpy(int_convert, begin_int, length);
-				int_convert[length] = '\0';
-				work->next = malloc(sizeof(struct Part));
-				//printf("work next is new ptr %u\n",work->next);
-				work->next->operator = 0;
-				//printf("Source string %s\n",int_convert);
-				work->next->value = atof(int_convert);
-				work->next->next = NULL;
-				//printf("Assigning value address is %u, assigning value %f with result %f\n", &(work->next->value), atof(int_convert), work->next->value);
-				work = work->next;
-				free(int_convert);
-				break;
-			case 2:
-				work->next = malloc(sizeof(struct Part));
-				//printf("work next is new ptr %u\n",work->next);
-				work->next->operator = *input;
-				work->next->value = 0;
-				work->next->next = NULL;
-				//printf("op in work next set to %c\n", work->next->operator);
-				work = work->next;
+		int test = char_validation(*input);
+		printf("begin loop reading char %c\n", *input);
+		if(test == 1 || (negative_ok && *input == '-')){
+			//make a substring that contains the entire character and close the program if the number is invalid.
+			char *begin_int = input;
+			int periodSeen = 0;
+			int length = 0;
+			if(*input == '-') {
+				length++;
 				input++;
-				break;
-			default: //error
-				return NULL;
+			}
+			while(char_validation(*input)==1){
+				length++;
+				if(*input=='.') {
+					periodSeen++;
+					if(periodSeen>1) {
+						//printf("Syntax error");
+						return 0;
+					}
+				}
+				input++;
+			}
+			char *int_convert = malloc(length+1);
+			memcpy(int_convert, begin_int, length);
+			int_convert[length] = '\0';
+			work->next = malloc(sizeof(struct Part));
+			//printf("work next is new ptr %u\n",work->next);
+			work->next->operator = 0;
+			//printf("Source string %s\n",int_convert);
+			work->next->value = atof(int_convert);
+			work->next->next = NULL;
+			//printf("Assigning value address is %u, assigning value %f with result %f\n", &(work->next->value), atof(int_convert), work->next->value);
+			work = work->next;
+			printf("attempt print\n");
+			printf("Alloc part %p, (%u,%c) %f\n", work, work->operator, work->operator, work->value);
+			free(int_convert);
+			negative_ok == 0;
 		}
+		else if(test == 2) {
+			if(*input == '(') negative_ok = 1;
+			work->next = malloc(sizeof(struct Part));
+			//printf("work next is new ptr %u\n",work->next);
+			work->next->operator = *input;
+			work->next->value = 0;
+			work->next->next = NULL;
+			//printf("op in work next set to %c\n", work->next->operator);
+			work = work->next;
+			printf("Alloc part %p, (%u,%c) %f\n", work, work->operator, work->operator, work->value);
+			input++;
+		}
+		else { //Input error crash program
+			;
+		}
+		printf("About to resume loop with input at %c\n", *input);
 	}
 	return unread_head->next;
 }
@@ -205,7 +218,7 @@ float eval_expr(char *input){
 	//printf("%u, %u\n", out_queue_front, out_queue_back);
 	struct Part *placeholder = out_queue_front;
 	while(out_queue_front!=NULL){
-		printf("Object %u contains (%u,%c) %f \n", out_queue_front, out_queue_front->operator, out_queue_front->operator, out_queue_front->value);
+		printf("Object at %p contains (%u,%c) %f \n", out_queue_front, out_queue_front->operator, out_queue_front->operator, out_queue_front->value);
 		if(out_queue_front->next == NULL) break;
 		out_queue_front = out_queue_front->next;
 	}
