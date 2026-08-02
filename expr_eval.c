@@ -158,6 +158,26 @@ float eval_expr(char *input){
 				op_stack = op_stack->next;
 			} else {
 				//TODO Handle critical input error mismatched parens
+				struct Part *tmp;
+				while(op_stack!=NULL){
+					tmp = op_stack;
+					if(op_stack->next == NULL){
+						free(tmp);
+						break;						
+					}
+					op_stack = op_stack->next;
+					free(tmp);
+				}
+				while(out_queue_front!=NULL){
+					tmp = out_queue_front;
+					if(out_queue_front->next == NULL){
+						free(tmp);
+						break;						
+					}
+					out_queue_front = out_queue_front->next;
+					free(tmp);
+				}
+				return 0;
 				break;
 			}
 		} else {//This is some kind of operator called o1
