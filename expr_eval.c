@@ -117,11 +117,12 @@ float eval_expr(char *input){
 	struct Part *op_stack = NULL;
 	struct Part *out_queue_front = NULL;
 	struct Part *out_queue_back = NULL;
-	
+	printf("\nBegin process\n");
 	while(work!=NULL){
-		printf("Process unit %u, (%u, %c), %f\n", work, work->operator, work->operator, work->value);
+		printf("Process unit %p, (%u, %c), %f\n", work, work->operator, work->operator, work->value);
 		if(work->operator==0){
-			printf("\tNumber %f to output queue\n", work->value);
+			printf("\t# branch\n");
+			printf("\t%p, (%u,%c), %f to output_queue\n", work, work->operator, work->operator, work->value);
 			if(out_queue_front == NULL){
 				out_queue_front = out_queue_back = work;
 			} else {
@@ -129,21 +130,27 @@ float eval_expr(char *input){
 				out_queue_back = work;
 			}
 			work=work->next;
+			//Unlink new addition to the queue to avoid loops.
+			out_queue_back->next=NULL;
 		} else if(work->operator=='('){ //push onto operator stack
-			printf("\tLeft paren to op stack\n", op_stack->operator);
+			printf("\t( branch\n");
+			printf("\t%p, (%u,%c), %f to op_stack\n", work, work->operator, work->operator, work->value);
 			if(op_stack==NULL){
 				op_stack = work;
 				work=work->next;
+				op_stack->next = NULL;
 			} else {
 				struct Part *tmp = work;
 				work = work->next;
 				tmp->next = op_stack;
 				op_stack = tmp;
+
 			}
+			
 		} else if(work->operator==')'){ //Move everything from operator stack to output queue until you find a left paren
-			printf("\tRight paren, move all from op stack to out queue until left paren found\n");
+			printf("\t) branch, move all from op stack to out queue until left paren found\n");
 			while(op_stack != NULL && op_stack->operator!='('){
-				printf("Push %c to op stack\n", op_stack->operator);
+				printf("\t%p, (%u,%c), %f from op_stack to op_queue\n", op_stack, op_stack->operator, op_stack->operator, op_stack->value);
 				if(out_queue_front==NULL){
 					out_queue_front = op_stack;
 					out_queue_back = op_stack;
@@ -152,12 +159,13 @@ float eval_expr(char *input){
 					out_queue_back = op_stack;
 				}
 				op_stack = op_stack->next;
+				out_queue_back->next = NULL;
 			}
 			if(op_stack!=NULL && op_stack->operator == '('){
-				printf("\tDiscard left paren\n");
+				printf("\tDiscard ( %p\n", op_stack);
 				op_stack = op_stack->next;
 			} else {
-				//TODO Handle critical input error mismatched parens
+				printf("\nParse error: Critical mismatched parens\n");
 				struct Part *tmp;
 				while(op_stack!=NULL){
 					tmp = op_stack;
@@ -180,8 +188,10 @@ float eval_expr(char *input){
 				return 0;
 				break;
 			}
+			printf("\tAdvance work\n");
+			work = work->next;
 		} else {//This is some kind of operator called o1
-			printf("\tOperator %c to op stack\n", work->operator);
+			printf("\tOperator branch\n", work->operator);
 			//while (
 				//there is an operator o2 at the top of the operator stack which is not a left parenthesis
 				//and (o2 has greater precedence than o1 
@@ -209,16 +219,15 @@ float eval_expr(char *input){
 				op_stack = op_stack->next;		
 			}
 			//push o1 onto the operator stack
-			printf("\tPushing o1 %c to op stack\n", work->operator);
+			printf("\t%p, (%u,%c), %f to op_stack\n", work, work->operator, work->operator, work->value);
 			struct Part *tmp = work;
 			work = work->next;
 			tmp->next = op_stack;
 			op_stack = tmp;
 		}
 	}
-
 	while(op_stack!=NULL){
-		//printf("Op stack contains %u (%u, %c), %f\n", op_stack, op_stack->operator, op_stack->operator, op_stack->value);
+		printf("Op stack contains %u (%u, %c), %f\n", op_stack, op_stack->operator, op_stack->operator, op_stack->value);
 		if(op_stack->operator=='(') {//CRITICAL ERROR
 			break;
 		}
@@ -233,9 +242,10 @@ float eval_expr(char *input){
 			break;
 		}
 		op_stack = op_stack->next;
+
 	}
-	//printf("Done making rpn\n");
-	//printf("%u, %u\n", out_queue_front, out_queue_back);
+	printf("Done making rpn\n");
+	printf("%u, %u\n", out_queue_front, out_queue_back);
 	struct Part *placeholder = out_queue_front;
 	while(out_queue_front!=NULL){
 		printf("Object at %p contains (%u,%c) %f \n", out_queue_front, out_queue_front->operator, out_queue_front->operator, out_queue_front->value);
