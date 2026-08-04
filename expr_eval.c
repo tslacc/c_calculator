@@ -266,6 +266,15 @@ float eval_expr(char *input){
 			tmp->next = eval_stack;
 			eval_stack = tmp;
 		} else {
+			if(eval_stack==NULL || eval_stack->next == NULL){
+				//Panic cleanup
+				while(out_queue_front!=NULL){
+					struct Part *tmp = out_queue_front;
+					out_queue_front = out_queue_front->next;
+					free(tmp);
+				}
+				return 0;
+			}
 			struct Part *op1 = eval_stack;
 			eval_stack = eval_stack->next;
 			//printf("Evaluating operator %c in %u %u, v %f %f\n", out_queue_front->operator, op1, eval_stack, op1->value, eval_stack->value);
